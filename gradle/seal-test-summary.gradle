@@ -1,0 +1,22 @@
+// Gradle init script (passed with -I) that makes a green test run state its
+// results in the CI log: Gradle prints nothing for passing tests by default.
+// Prints one result line per test class, every failed/skipped test, and a
+// per-project total. Uses logger.lifecycle, not println: build.gradle sets
+// logging.captureStandardOutput(LogLevel.INFO) on the test task, which hides
+// stdout written while tests run.
+allprojects {
+	tasks.withType(Test) {
+		testLogging {
+			events 'failed', 'skipped'
+			exceptionFormat 'full'
+		}
+		afterSuite { desc, result ->
+			if (desc.className != null && desc.parent != null) {
+				logger.lifecycle("TEST CLASS ${desc.className}: ${result.resultType} - ${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped")
+			}
+			if (desc.parent == null) {
+				logger.lifecycle("TEST SUMMARY [${project.path}]: ${result.resultType} - ${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped")
+			}
+		}
+	}
+}
